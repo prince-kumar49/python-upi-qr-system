@@ -1,27 +1,58 @@
+import tkinter as tk
+from tkinter import messagebox
 import qrcode
-# taking UPI ID as input 
-upi_id=input("enter your upi id=")
+from PIL import Image, ImageTk
 
-#upi://pay?pa=UPI_ID&pn=NAME&am=Amount&cu=CURRENCY&tn=MESSAGE
+def generate_qr():
+    upi_id = upi_entry.get().strip()
+    name = name_entry.get().strip()
+    amount = amount_entry.get().strip()
+    note = note_entry.get().strip()
 
-#Defining the payment URL based on the UPI ID and the payment app
-#You can modify these URLs based on the payment apps you want to support
+    if not upi_id or not name:
+        messagebox.showerror("Error", "UPI ID and Name are required!")
+        return
 
-phonepe_url = f'upi://pay?pa={upi_id}&pn=Recipient%20Name&mc=1234'
-paytm_url = f'upi://pay?pa={upi_id}&pn=Recipient%20Name&mc=1234'
-google_pay_url = f'upi://pay?pa={upi_id}&pn=Recipient%20Name&mc=1234'
+    upi_url = f"upi://pay?pa={upi_id}&pn={name}&cu=INR"
+    if amount:
+        upi_url += f"&am={amount}"
+    if note:
+        upi_url += f"&tn={note}"
 
-#Create QR Codes for each payment app
-phonepe_qr = qrcode.make(phonepe_url)
-paytm_qr = qrcode.make(paytm_url)
-google_pay_qr = qrcode.make(google_pay_url)
+    qr = qrcode.make(upi_url)
+    qr.save("upi_qr.png")
 
-#Save the QR code to image file (optional)
-phonepe_qr.save('phonepe_qr.png')
-paytm_qr.save('paytm_qr.png')
-google_pay_qr.save('google_pay_qr.png')
+    img = Image.open("upi_qr.png").resize((200, 200))
+    img_tk = ImageTk.PhotoImage(img)
+    qr_label.config(image=img_tk)
+    qr_label.image = img_tk  # keep reference so it doesn’t get garbage collected
 
-#Display the QR codes (you may need to install PIL/Pillow Library)
-phonepe_qr.show()
-paytm_qr.show()
-google_pay_qr.show()
+#  Create the Tkinter root window first
+root = tk.Tk()
+root.title("UPI QR Code Generator")
+
+# Input fields
+tk.Label(root, text="UPI ID:").grid(row=0, column=0, sticky="e")
+upi_entry = tk.Entry(root, width=30)
+upi_entry.grid(row=0, column=1)
+
+tk.Label(root, text="Name:").grid(row=1, column=0, sticky="e")
+name_entry = tk.Entry(root, width=30)
+name_entry.grid(row=1, column=1)
+
+tk.Label(root, text="Amount (optional):").grid(row=2, column=0, sticky="e")
+amount_entry = tk.Entry(root, width=30)
+amount_entry.grid(row=2, column=1)
+
+tk.Label(root, text="Note (optional):").grid(row=3, column=0, sticky="e")
+note_entry = tk.Entry(root, width=30)
+note_entry.grid(row=3, column=1)
+
+tk.Button(root, text="Generate QR", command=generate_qr).grid(row=4, columnspan=2, pady=10)
+
+# QR Code display area
+qr_label = tk.Label(root)
+qr_label.grid(row=5, columnspan=2)
+
+#  Start Tkinter main loop
+root.mainloop()
